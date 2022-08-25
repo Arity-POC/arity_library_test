@@ -1,0 +1,65 @@
+ext.enableJacoco = { Project project, String variant ->
+    project.plugins.apply('jacoco')
+    final capVariant = variant.capitalize()
+    StringBuilder folderSb = new StringBuilder(variant.length() + 1)
+    for (int i = 0; i < variant.length(); i++) {
+        char c = variant.charAt(i)
+        if (Character.isUpperCase(c)) {
+            folderSb.append('/')
+            folderSb.append(Character.toLowerCase(c))
+        } else {
+            folderSb.append(c)
+        }
+    }
+    final folder = folderSb.toString()
+    project.android.testOptions {
+        unitTests.all {
+            jacoco {
+                includeNoLocationClasses = true
+                excludes = ['jdk.internal.*']
+            }
+        }
+    }
+    project.jacoco {
+        toolVersion = '0.8.8'
+    }
+    project.tasks.create(
+            name: 'jacocoTestReport',
+            type: JacocoReport,
+            dependsOn: "test${capVariant}UnitTest"
+    ) {
+        def buildDir = project.buildDir
+        def coverageSourceDirs = [
+                "src/main/java",
+                "src/main/kotlin"
+        ]
+        def fileFilter = [
+                '**/R.class',
+                '**/R$*.class',
+                '**/*$ViewInjector*.*',
+                '**/*$ViewBinder*.*',
+                '**/BuildConfig.*',
+                '**/Manifest*.*'
+        ]
+        def javaClasses = fileTree(
+                dir: "$buildDir/intermediates/classes/$folder",
+                excludes: fileFilter
+        )
+        def kotlinClasses = fileTree(
+                dir: "$buildDir/tmp/kotlin-classes/$variant",
+                excludes: fileFilter
+        )
+        group = "Reporting"
+        description = "Generate Jacoco coverage reports for the ${project.name} with the $variant variant."
+
+        classDirectories.setFrom(files([ javaClasses ], [ kotlinClasses ]))
+        additionalSourceDirs.setFrom(files(coverageSourceDirs))
+        sourceDirectories.setFrom(files(coverageSourceDirs))
+        executionData.setFrom(files("${project.buildDir}/jacoco/test${capVariant}UnitTest.exec"))
+
+        reports {
+            xml.enabled = true
+            html.enabled = true
+        }
+    }
+}

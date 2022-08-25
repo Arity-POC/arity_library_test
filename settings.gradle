@@ -5,6 +5,17 @@ pluginManagement {
         mavenCentral()
     }
 }
+
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+    }
+    dependencies {
+        classpath 'org.jacoco:org.jacoco.core:0.8.8'
+    }
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -13,5 +24,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "Arity Test"
-include ':app'
-include ':sdk'
+include ':app', ':sdk'
